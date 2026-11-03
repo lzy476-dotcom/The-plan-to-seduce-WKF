@@ -1,0 +1,15 @@
+# 数据库（本地数据，不推）
+data/diet.db
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.idea/
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db

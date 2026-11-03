@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>饮食记录</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/vendor/flatpickr.min.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">🥗</span>
+      <div class="brand-text">
+        <h1>饮食记录</h1>
+        <p class="brand-sub">记录每一餐，吃得更明白</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <label class="toggle" title="开启后：食物首次录入即锁定营养，之后只填克重">
+        <input type="checkbox" id="lock-nutri" />
+        <span class="toggle-track"></span>
+        <span class="toggle-label">锁定营养</span>
+      </label>
+      <div class="date-box" id="date-box">
+        <span class="date-icon">📅</span>
+        <input type="text" id="date" readonly placeholder="选择日期" />
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <!-- 左侧导航 -->
+    <nav class="sidebar">
+      <div class="nav-item active" data-view="record">
+        <span class="nav-icon">🍽️</span>
+        <span class="nav-text">饮食记录</span>
+      </div>
+      <div class="nav-item" data-view="plan">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-text">饮食计划</span>
+      </div>
+      <div class="nav-item" data-view="history">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">历史饮食</span>
+      </div>
+    </nav>
+
+    <!-- 右侧内容区：三个视图 -->
+    <div class="content">
+      <!-- 视图1：饮食记录 -->
+      <div class="view" id="view-record">
+        <main class="layout">
+          <section class="card" id="today-card">
+            <div class="card-head">
+              <h2>今日饮食</h2>
+            </div>
+            <div class="summary" id="summary">
+              <div class="summary-item">
+                <span class="summary-num" id="sum-kcal">0</span>
+                <span class="summary-unit">千卡</span>
+                <span class="summary-label">总热量</span>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-item">
+                <span class="summary-num" id="sum-protein">0</span>
+                <span class="summary-unit">g</span>
+                <span class="summary-label">蛋白质</span>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-item">
+                <span class="summary-num" id="sum-carbs">0</span>
+                <span class="summary-unit">g</span>
+                <span class="summary-label">碳水</span>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-item">
+                <span class="summary-num" id="sum-fat">0</span>
+                <span class="summary-unit">g</span>
+                <span class="summary-label">脂肪</span>
+              </div>
+            </div>
+            <div id="meals" class="meals-list"></div>
+          </section>
+
+          <section class="card" id="form-card">
+            <div class="card-head">
+              <h2>添加一餐</h2>
+              <span class="card-tip">一次可记录多个食物</span>
+            </div>
+            <form id="meal-form">
+              <datalist id="food-suggest"></datalist>
+              <div id="items"></div>
+              <button type="button" id="add-item" class="btn-add">
+                <span class="btn-add-plus">＋</span> 添加食物
+              </button>
+              <div class="field">
+                <textarea id="note" rows="2" placeholder="一餐备注（可选）"></textarea>
+              </div>
+              <button type="submit" class="btn-primary">记录这一餐</button>
+            </form>
+          </section>
+        </main>
+      </div>
+
+      <!-- 视图2：饮食计划 -->
+      <div class="view" id="view-plan" hidden>
+        <main class="layout plan-layout">
+          <section class="card">
+            <div class="card-head">
+              <h2>今日目标</h2>
+              <span class="card-tip">对比当天实际摄入</span>
+            </div>
+            <div id="today-plan"></div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <h2>我的计划</h2>
+              <div class="card-actions">
+                <button type="button" id="new-plan" class="btn-add btn-add-sm">
+                  <span class="btn-add-plus">＋</span> 新建计划
+                </button>
+              </div>
+            </div>
+
+            <!-- 计划编辑表单（内嵌，新建/编辑共用） -->
+            <div id="plan-form-wrap" hidden>
+              <div class="plan-form-title" id="plan-form-title">新建计划</div>
+              <div class="field">
+                <label class="field-label" for="plan-name">计划名称</label>
+                <input type="text" id="plan-name" placeholder="例如：减脂计划" />
+              </div>
+              <div class="field">
+                <label class="field-label">时间段 <span class="field-hint">每个时间段填起止日期与每日目标</span></label>
+                <div id="plan-phases"></div>
+                <button type="button" id="add-phase" class="btn-add" style="margin-top:10px;">
+                  <span class="btn-add-plus">＋</span> 添加时间段
+                </button>
+              </div>
+              <div class="plan-form-foot">
+                <button type="button" class="btn-plain" id="plan-cancel">取消</button>
+                <button type="button" class="btn-primary" id="plan-save">保存计划</button>
+              </div>
+            </div>
+
+            <div id="plans-list"></div>
+          </section>
+        </main>
+      </div>
+
+      <!-- 视图3：历史饮食（占位） -->
+      <div class="view" id="view-history" hidden>
+        <main class="layout">
+          <section class="card">
+            <div class="card-head"><h2>历史饮食</h2></div>
+            <div class="empty"><div class="empty-icon">📊</div><div class="empty-text">即将上线</div></div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/vendor/flatpickr.min.js"></script>
+  <script src="/static/vendor/zh.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
