@@ -9,6 +9,11 @@ class FoodCreate(BaseModel):
     protein_per_100g: float = 0
     carbs_per_100g: float = 0
     fat_per_100g: float = 0
+    # 每份营养（外卖/一碗饭/一杯等「按份」计量的食物）
+    kcal_per_serving: float = 0
+    protein_per_serving: float = 0
+    carbs_per_serving: float = 0
+    fat_per_serving: float = 0
 
 
 class FoodUpdate(BaseModel):
@@ -17,6 +22,10 @@ class FoodUpdate(BaseModel):
     protein_per_100g: Optional[float] = None
     carbs_per_100g: Optional[float] = None
     fat_per_100g: Optional[float] = None
+    kcal_per_serving: Optional[float] = None
+    protein_per_serving: Optional[float] = None
+    carbs_per_serving: Optional[float] = None
+    fat_per_serving: Optional[float] = None
 
 
 class MealItemCreate(BaseModel):
@@ -27,7 +36,13 @@ class MealItemCreate(BaseModel):
     protein_per_100g: float = 0
     carbs_per_100g: float = 0
     fat_per_100g: float = 0
-    grams: float = 0               # 本次吃掉的克重
+    # 每份营养（按份计量时用）
+    protein_per_serving: float = 0
+    carbs_per_serving: float = 0
+    fat_per_serving: float = 0
+    unit: str = "g"               # "g" = 按克，按 grams 算；"serving" = 按份，按 servings 算
+    grams: float = 0               # 按克时的克重
+    servings: float = 0            # 按份时的份数
 
 
 class MealCreate(BaseModel):
@@ -54,3 +69,12 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     name: Optional[str] = None
     phases: Optional[List[PlanPhaseCreate]] = None
+
+
+class UserProfile(BaseModel):
+    """用户身体数据（单行）。"""
+    gender: str = "male"          # male / female
+    age: int = 25
+    height_cm: float = 170
+    weight_kg: float = 60
+    activity: str = "light"       # sedentary/light/moderate/active/very_active

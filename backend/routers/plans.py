@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 
 from database import get_conn
 from models import PlanCreate, PlanUpdate
+from routers.profile import _load, _compute_targets
 
 router = APIRouter(prefix="/api/plans", tags=["plans"])
 
@@ -35,6 +36,45 @@ def list_plans():
             continue
     conn.close()
     return result
+
+
+@router.post("/generate")
+def generate_plan(start_date: str = None):
+    """按「碳水减降模板」一键生成完整的分阶段计划。
+
+    使用 user_profile 里的体重计算碳水循环目标，创建名为「碳水减降计划」的计划，
+    每个阶段一个时间段，从 start_date（默认今天）起依次顺延。
+    """
+    from datetime import date as _date, timedelta
+
+    if start_date is None:
+        start_date = _date.today().isoformat()
+
+    conn = get_conn()
+    try:
+        profile = _load(conn)
+        result = _compute_targets(profile)
+    finally:
+        conn.close()
+
+    # 逐阶段计算日期范围，构造多段时间段
+    from models import PlanPhaseCreate
+
+    phases = []
+    cur_date = _date.fromisoformat(start_date)
+    for ph in result["phases"]:
+        end_date = cur_date + timedelta(days=ph["days"] - 1)
+        phases.append(PlanPhaseCreate(
+            start_date=cur_date.isoformat(),
+            end_date=end_date.isoformat(),
+            kcal=ph["kcal"],
+            protein=ph["protein"],
+            carbs=ph["carbs"],
+            fat=ph["fat"],
+        ))
+        cur_date = end_date + timedelta(days=1)
+
+    return create_plan(PlanCreate(name="碳水减降计划", phases=phases))
 
 
 @router.post("")

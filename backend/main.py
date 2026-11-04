@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db
-from routers import foods, meals, settings, plans
+from routers import foods, meals, settings, plans, profile
 
 # 启动时建表
 init_db()
@@ -22,6 +22,7 @@ app.include_router(foods.router)
 app.include_router(meals.router)
 app.include_router(settings.router)
 app.include_router(plans.router)
+app.include_router(profile.router)
 
 # 挂载前端静态文件
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"

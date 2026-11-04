@@ -269,12 +269,15 @@ form { display: flex; flex-direction: column; gap: 12px; }
 .item-row {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 11px;
+  padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #fafcfa;
+  background: #fcfdfc;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
+.item-row:hover { border-color: #dde5e0; }
 
 input, textarea {
   padding: 10px 12px;
@@ -293,6 +296,7 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(47,158,110,0.12);
 }
 input::placeholder, textarea::placeholder { color: #b3bdb7; }
+input:hover:not(:focus), textarea:hover:not(:focus) { border-color: #ccd6d0; }
 
 /* 去掉 number 输入框的增减箭头 */
 input[type="number"]::-webkit-outer-spin-button,
@@ -320,8 +324,10 @@ form .grid.nutri { grid-template-columns: 1fr 1fr 1fr; }
   cursor: pointer;
   color: #c0c9c4;
   border: none; background: none;
-  font-size: 15px; padding: 4px;
-  border-radius: 6px;
+  font-size: 15px; padding: 6px 8px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
 }
 .item-row .del-item:hover { color: #e05959; background: #fbeeee; }
 
@@ -512,38 +518,6 @@ textarea { resize: vertical; min-height: 56px; }
 }
 
 /* ===== 饮食计划 ===== */
-.plan-active-plan {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--green-dark);
-}
-.plan-active-range {
-  font-size: 12px;
-  color: var(--text-sub);
-  margin: 4px 0 16px;
-}
-.plan-progress { display: flex; flex-direction: column; gap: 14px; }
-.plan-progress-row { display: flex; flex-direction: column; gap: 6px; }
-.plan-progress-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-}
-.plan-progress-head .over { color: #e05959; font-weight: 600; }
-.plan-bar {
-  height: 8px;
-  background: #eef2ef;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.plan-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--green), var(--green-dark));
-  border-radius: 4px;
-  transition: width 0.3s;
-}
-.plan-bar-fill.over { background: linear-gradient(90deg, #f08b8b, #e05959); }
-
 .plan-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -658,3 +632,160 @@ textarea { resize: vertical; min-height: 56px; }
   transition: background 0.15s;
 }
 .btn-plain:hover { background: var(--bg); }
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+
+/* ===== 今日剩余 ===== */
+#remaining {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.remain-head { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.remain-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .remain-grid { grid-template-columns: 1fr 1fr; }
+}
+.remain-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  background: var(--green-light);
+  border-radius: var(--radius-sm);
+}
+.remain-label { font-size: 11px; color: var(--text-sub); }
+.remain-value { font-size: 18px; font-weight: 800; color: var(--green-dark); line-height: 1; }
+.remain-value.remain-over { color: #e05959; }
+.remain-value.remain-done { color: var(--text-sub); font-size: 15px; }
+.remain-unit { font-size: 10px; color: var(--text-sub); }
+
+/* ===== 历史饮食 ===== */
+.history-layout { grid-template-columns: 1fr; max-width: 860px; }
+.history-day {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fcfdfc;
+}
+.history-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.history-date { font-size: 15px; font-weight: 700; color: var(--green-dark); }
+.history-day-sum { font-size: 12px; color: var(--text-sub); }
+.history-day .meal + .meal { margin-top: 12px; }
+
+/* ===== 克/份切换（胶囊，紧跟食物名称） ===== */
+.row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-top .i-name { flex: 1; min-width: 0; }
+.unit-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+.unit-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-sub);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s;
+}
+.unit-btn.active {
+  background: var(--green);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 碳水减降模板 ===== */
+.tpl-target {
+  margin: 4px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tpl-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 2px; }
+.tpl-phase {
+  padding: 14px 16px;
+  background: #fbfdfc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tpl-phase:hover { border-color: #d9e3dd; }
+.tpl-phase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.tpl-phase-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tpl-phase-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #b8860b;
+  background: #fdf3d8;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.tpl-phase-days { font-size: 12px; color: var(--text-sub); }
+.tpl-phase-nums {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tpl-mult {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-right: 4px;
+}
+.tpl-mult .tpl-mult-label { font-size: 11px; color: var(--text-sub); }
+.tpl-mult .tpl-mult-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-dark);
+  line-height: 1;
+}
+.tpl-mult .tpl-mult-x {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+}
+.tpl-phase-kcal {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-sub);
+  font-weight: 600;
+}

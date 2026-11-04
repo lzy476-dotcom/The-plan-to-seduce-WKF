@@ -35,9 +35,12 @@ def _resolve_food_id(conn, item: MealItemCreate) -> int:
     row = conn.execute("SELECT id FROM foods WHERE name = ?", (name,)).fetchone()
     if row is None:
         cur = conn.execute(
-            """INSERT INTO foods (name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g)
-               VALUES (?, ?, ?, ?, ?)""",
-            (name, kcal_per_100g, item.protein_per_100g, item.carbs_per_100g, item.fat_per_100g),
+            """INSERT INTO foods (name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
+                                  kcal_per_serving, protein_per_serving, carbs_per_serving, fat_per_serving)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (name, kcal_per_100g, item.protein_per_100g, item.carbs_per_100g, item.fat_per_100g,
+             _calc_kcal(item.protein_per_serving, item.carbs_per_serving, item.fat_per_serving),
+             item.protein_per_serving, item.carbs_per_serving, item.fat_per_serving),
         )
         return cur.lastrowid
     else:
@@ -45,19 +48,35 @@ def _resolve_food_id(conn, item: MealItemCreate) -> int:
         if not _nutrition_locked():
             conn.execute(
                 """UPDATE foods
-                   SET kcal_per_100g = ?, protein_per_100g = ?, carbs_per_100g = ?, fat_per_100g = ?
+                   SET kcal_per_100g = ?, protein_per_100g = ?, carbs_per_100g = ?, fat_per_100g = ?,
+                       kcal_per_serving = ?, protein_per_serving = ?, carbs_per_serving = ?, fat_per_serving = ?
                    WHERE id = ?""",
-                (kcal_per_100g, item.protein_per_100g, item.carbs_per_100g, item.fat_per_100g, row["id"]),
+                (kcal_per_100g, item.protein_per_100g, item.carbs_per_100g, item.fat_per_100g,
+                 _calc_kcal(item.protein_per_serving, item.carbs_per_serving, item.fat_per_serving),
+                 item.protein_per_serving, item.carbs_per_serving, item.fat_per_serving, row["id"]),
             )
         return row["id"]
 
 
-def _calc(item: dict, grams: float) -> dict:
-    """为一条 item 补充实际摄入量字段。"""
-    item["kcal"] = item["kcal_per_100g"] * grams / 100
-    item["protein"] = item["protein_per_100g"] * grams / 100
-    item["carbs"] = item["carbs_per_100g"] * grams / 100
-    item["fat"] = item["fat_per_100g"] * grams / 100
+def _calc(item: dict, qty: float, unit: str) -> dict:
+    """为一条 item 补充实际摄入量字段。
+
+    qty 与 unit：
+      - unit == "g"：qty 是克重，摄入 = 每100g营养 × qty / 100
+      - unit == "serving"：qty 是份数，摄入 = 每份营养 × qty
+    """
+    if unit == "serving":
+        item["kcal"] = item["kcal_per_serving"] * qty
+        item["protein"] = item["protein_per_serving"] * qty
+        item["carbs"] = item["carbs_per_serving"] * qty
+        item["fat"] = item["fat_per_serving"] * qty
+    else:
+        item["kcal"] = item["kcal_per_100g"] * qty / 100
+        item["protein"] = item["protein_per_100g"] * qty / 100
+        item["carbs"] = item["carbs_per_100g"] * qty / 100
+        item["fat"] = item["fat_per_100g"] * qty / 100
+    item["unit"] = unit
+    item["qty"] = qty
     return item
 
 
@@ -74,9 +93,11 @@ def create_meal(meal: MealCreate):
         meal_id = cur.lastrowid
         for item in meal.items:
             food_id = _resolve_food_id(conn, item)
+            unit = item.unit if item.unit in ("g", "serving") else "g"
+            qty = item.servings if unit == "serving" else item.grams
             conn.execute(
-                "INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)",
-                (meal_id, food_id, item.grams),
+                "INSERT INTO meal_items (meal_id, food_id, grams, unit) VALUES (?, ?, ?, ?)",
+                (meal_id, food_id, qty, unit),
             )
         conn.commit()
     except HTTPException:
@@ -99,16 +120,17 @@ def _get_meal(conn, meal_id: int) -> dict:
         raise HTTPException(status_code=404, detail="该餐不存在")
     meal = dict(row)
     items = conn.execute(
-        """SELECT i.id, i.grams,
+        """SELECT i.id, i.grams, i.unit,
                   f.id AS food_id, f.name AS food_name,
-                  f.kcal_per_100g, f.protein_per_100g, f.carbs_per_100g, f.fat_per_100g
+                  f.kcal_per_100g, f.protein_per_100g, f.carbs_per_100g, f.fat_per_100g,
+                  f.kcal_per_serving, f.protein_per_serving, f.carbs_per_serving, f.fat_per_serving
            FROM meal_items i
            JOIN foods f ON f.id = i.food_id
            WHERE i.meal_id = ?
            ORDER BY i.id""",
         (meal_id,),
     ).fetchall()
-    meal["items"] = [_calc(dict(i), i["grams"]) for i in items]
+    meal["items"] = [_calc(dict(i), i["grams"], i["unit"]) for i in items]
     meal["kcal"] = sum(i["kcal"] for i in meal["items"])
     meal["protein"] = sum(i["protein"] for i in meal["items"])
     meal["carbs"] = sum(i["carbs"] for i in meal["items"])

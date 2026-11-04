@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS meal_items (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     meal_id     INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE,
     food_id     INTEGER NOT NULL REFERENCES foods(id),
-    grams       REAL NOT NULL DEFAULT 0,   -- 本次吃掉的克重(g)
+    grams       REAL NOT NULL DEFAULT 0,   -- 数量：按克时=克重(g)，按份时=份数
+    unit        TEXT NOT NULL DEFAULT 'g', -- "g"=按克，"serving"=按份
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
@@ -62,6 +63,15 @@ CREATE TABLE IF NOT EXISTS plan_phases (
 );
 
 CREATE INDEX IF NOT EXISTS idx_plan_phases_plan ON plan_phases(plan_id);
+
+CREATE TABLE IF NOT EXISTS user_profile (
+    id          INTEGER PRIMARY KEY CHECK (id = 1),  -- 固定单行
+    gender      TEXT NOT NULL DEFAULT 'male',        -- male / female
+    age         INTEGER NOT NULL DEFAULT 25,
+    height_cm   REAL NOT NULL DEFAULT 170,
+    weight_kg   REAL NOT NULL DEFAULT 60,
+    activity    TEXT NOT NULL DEFAULT 'light'        -- sedentary/light/moderate/active/very_active
+);
 """
 
 
@@ -79,6 +89,34 @@ def init_db() -> None:
     conn = get_conn()
     try:
         conn.executescript(SCHEMA)
+        conn.commit()
+    finally:
+        conn.close()
+    migrate_db()
+
+
+# 已有表需要补充的列迁移：foods 表新增「每份营养」4 列
+_SERVING_COLUMNS = [
+    ("kcal_per_serving", "REAL NOT NULL DEFAULT 0"),
+    ("protein_per_serving", "REAL NOT NULL DEFAULT 0"),
+    ("carbs_per_serving", "REAL NOT NULL DEFAULT 0"),
+    ("fat_per_serving", "REAL NOT NULL DEFAULT 0"),
+]
+
+
+def migrate_db() -> None:
+    """幂等迁移：给已有库补充新增列，不破坏原有数据。"""
+    conn = get_conn()
+    try:
+        # foods：每份营养 4 列
+        existing = {row["name"] for row in conn.execute("PRAGMA table_info(foods)").fetchall()}
+        for col, ddl in _SERVING_COLUMNS:
+            if col not in existing:
+                conn.execute(f"ALTER TABLE foods ADD COLUMN {col} {ddl}")
+        # meal_items：计量单位 unit 列
+        mi_existing = {row["name"] for row in conn.execute("PRAGMA table_info(meal_items)").fetchall()}
+        if "unit" not in mi_existing:
+            conn.execute("ALTER TABLE meal_items ADD COLUMN unit TEXT NOT NULL DEFAULT 'g'")
         conn.commit()
     finally:
         conn.close()

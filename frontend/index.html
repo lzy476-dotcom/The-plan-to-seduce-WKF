@@ -81,6 +81,7 @@
                 <span class="summary-label">脂肪</span>
               </div>
             </div>
+            <div id="remaining"></div>
             <div id="meals" class="meals-list"></div>
           </section>
 
@@ -109,18 +110,12 @@
         <main class="layout plan-layout">
           <section class="card">
             <div class="card-head">
-              <h2>今日目标</h2>
-              <span class="card-tip">对比当天实际摄入</span>
-            </div>
-            <div id="today-plan"></div>
-          </section>
-          <section class="card">
-            <div class="card-head">
               <h2>我的计划</h2>
               <div class="card-actions">
                 <button type="button" id="new-plan" class="btn-add btn-add-sm">
                   <span class="btn-add-plus">＋</span> 新建计划
                 </button>
+                <button type="button" id="toggle-template" class="btn-plain btn-sm">碳水减降模板</button>
               </div>
             </div>
 
@@ -146,15 +141,32 @@
 
             <div id="plans-list"></div>
           </section>
+
+          <!-- 碳水减降模板卡片（默认隐藏，点按钮展开） -->
+          <section class="card" id="template-card" hidden>
+            <div class="card-head">
+              <h2>碳水减降模板</h2>
+              <span class="card-tip">分阶段碳水循环 · 输入体重自动计算</span>
+            </div>
+            <div class="field">
+              <label class="field-label">体重 (kg)</label>
+              <input type="number" id="tpl-weight" step="0.1" placeholder="例如 70" />
+            </div>
+            <div id="tpl-target" class="tpl-target"></div>
+            <button type="button" id="tpl-generate" class="btn-primary">一键生成碳水减降计划</button>
+          </section>
         </main>
       </div>
 
-      <!-- 视图3：历史饮食（占位） -->
+      <!-- 视图3：历史饮食 -->
       <div class="view" id="view-history" hidden>
-        <main class="layout">
+        <main class="layout history-layout">
           <section class="card">
-            <div class="card-head"><h2>历史饮食</h2></div>
-            <div class="empty"><div class="empty-icon">📊</div><div class="empty-text">即将上线</div></div>
+            <div class="card-head">
+              <h2>历史饮食</h2>
+              <span class="card-tip">按日期倒序，回顾每一天</span>
+            </div>
+            <div id="history-list"></div>
           </section>
         </main>
       </div>

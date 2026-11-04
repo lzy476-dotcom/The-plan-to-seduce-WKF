@@ -20,10 +20,13 @@ def create_food(food: FoodCreate):
     conn = get_conn()
     try:
         cur = conn.execute(
-            """INSERT INTO foods (name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g)
-               VALUES (?, ?, ?, ?, ?)""",
+            """INSERT INTO foods (name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
+                                  kcal_per_serving, protein_per_serving, carbs_per_serving, fat_per_serving)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (food.name, food.kcal_per_100g, food.protein_per_100g,
-             food.carbs_per_100g, food.fat_per_100g),
+             food.carbs_per_100g, food.fat_per_100g,
+             food.kcal_per_serving, food.protein_per_serving,
+             food.carbs_per_serving, food.fat_per_serving),
         )
         conn.commit()
         fid = cur.lastrowid
